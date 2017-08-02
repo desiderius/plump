@@ -47,7 +47,7 @@
 (setf (documentation 'attributes 'function) "Returns an EQUALP hash-table of the element's attributes.")
 
 (defmethod print-object ((node element) stream)
-  (print-unreadable-object (node stream :type T :identity T)
+  (print-unreadable-object (node stream :type t :identity t)
     (write-string (tag-name node) stream))
   node)
 
@@ -57,7 +57,7 @@
 (setf (documentation 'doctype 'function) "Returns the doctype node's actual doctype string.")
 
 (defmethod print-object ((node doctype) stream)
-  (print-unreadable-object (node stream :type T)
+  (print-unreadable-object (node stream :type t)
     (write-string (doctype node) stream))
   node)
 
@@ -69,7 +69,7 @@
   (:documentation "XML header element"))
 
 (defmethod print-object ((node xml-header) stream)
-  (print-unreadable-object (node stream :type T)
+  (print-unreadable-object (node stream :type t)
     (format stream "version ~a" (attribute node "version")))
   node)
 
@@ -78,25 +78,25 @@
   (:documentation "XML CDATA section node."))
 
 (defmethod print-object ((node cdata) stream)
-  (print-unreadable-object (node stream :type T)
+  (print-unreadable-object (node stream :type t)
     (if (< 20 (length (text node)))
         (format stream "~s..." (subseq (text node) 0 20))
         (format stream "~s" (text node))))
   node)
 
 (defclass processing-instruction (child-node textual-node)
-  ((%tag-name :initarg :tag-name :initform NIL :accessor tag-name :type (or null string)))
+  ((%tag-name :initarg :tag-name :initform nil :accessor tag-name :type (or null string)))
   (:documentation "XML processing instruction node."))
 
 (defmethod print-object ((node processing-instruction) stream)
-  (print-unreadable-object (node stream :type T)
+  (print-unreadable-object (node stream :type t)
     (format stream "~@[~a~]" (tag-name node)))
   node)
 
 (declaim (ftype (function (&optional fixnum) (and (vector child-node) (not simple-array))) make-child-array))
 (defun make-child-array (&optional (size 0))
   "Creates an array to contain child elements"
-  (make-array size :adjustable T :fill-pointer 0 :element-type 'child-node))
+  (make-array size :adjustable t :fill-pointer 0 :element-type 'child-node))
 
 (declaim (ftype (function (array) (and (vector child-node) (not simple-array))) ensure-child-array))
 (defun ensure-child-array (array)
@@ -206,8 +206,8 @@ Note that the element is automatically appended to the parent's child list."
 (defmacro define-predicates (&rest classes)
   `(progn
      ,@(loop for class in classes
-             for predicate = (intern (format NIL "~a-~a" (string class) (string 'p)))
-             for docstring = (format NIL "Returns T if the given OBJECT is of type ~a" class)
+             for predicate = (intern (format nil "~a-~a" (string class) (string 'p)))
+             for docstring = (format nil "Returns T if the given OBJECT is of type ~a" class)
              collect `(defun ,predicate (object)
                         ,docstring
                         (typep object ',class)) into definitions
@@ -235,7 +235,7 @@ Note that the element is automatically appended to the parent's child list."
 
 Noe that the PARENT of all child elements is set to NIL."
   (loop for child across (children nesting-node)
-        do (setf (parent child) NIL))
+        do (setf (parent child) nil))
   (setf (fill-pointer (children nesting-node)) 0)
   nesting-node)
 
@@ -278,7 +278,7 @@ See VECTOR-POP-POSITION"
   (vector-pop-position
    (family child)
    (child-position child))
-  (setf (parent child) NIL)
+  (setf (parent child) nil)
   child)
 
 (defun replace-child (old-child new-child)
@@ -286,7 +286,7 @@ See VECTOR-POP-POSITION"
 Returns the old child."
   (setf (parent new-child) (parent old-child)
         (elt (family old-child) (child-position old-child)) new-child
-        (parent old-child) NIL)
+        (parent old-child) nil)
   old-child)
 
 (defun insert-before (element new-child)
@@ -326,14 +326,14 @@ See ARRAY-SHIFT"
     (cond ((= 0 count)
            (vector-pop-position family position)
            parent)
-          (T
+          (t
            (array-shift (children parent) :n (1- count) :from position)
            (loop repeat count
                  for i from position
                  for child across (children element)
                  do (setf (aref family i) child)
                     (setf (parent child) parent))))
-    (setf (parent element) NIL)
+    (setf (parent element) nil)
     parent))
 
 (defun clone-children (node &optional deep new-parent)
@@ -343,7 +343,7 @@ When copying deeply, you can also pass a NEW-PARENT to set on each child."
   (loop with array = (make-child-array (length (children node)))
         for child across (children node)
         do (vector-push (if deep
-                            (let ((child (clone-node child T)))
+                            (let ((child (clone-node child t)))
                               (when new-parent (setf (parent child) new-parent))
                               child)
                             child) array)
@@ -363,31 +363,31 @@ Note that keys and values are NOT copied/cloned."
 If DEEP is non-NIL, the following applies:
 The text of COMMENT and TEXT-NODEs is copied as per COPY-SEQ.
 The children of NESTING-NODEs are copied as per (CLONE-CHILDREN CHILD T)")
-  (:method ((node node) &optional (deep T))
+  (:method ((node node) &optional (deep t))
     (declare (ignore deep))
     (make-instance (class-of node)))
-  (:method ((node nesting-node) &optional (deep T))
+  (:method ((node nesting-node) &optional (deep t))
     (let ((clone (make-instance (class-of node)
                                 :parent (parent node)
                                 :children (make-child-array))))
       (setf (children clone) (clone-children node deep clone))
       clone))
-  (:method ((node child-node) &optional (deep T))
+  (:method ((node child-node) &optional (deep t))
     (declare (ignore deep))
     (make-instance (class-of node)
                    :parent (parent node)))
-  (:method ((node textual-node) &optional (deep T))
+  (:method ((node textual-node) &optional (deep t))
     (make-instance (class-of node)
                    :text (if deep (copy-seq (text node)) (text node))))
-  (:method ((node text-node) &optional (deep T))
-    (make-instance (class-of node)
-                   :parent (parent node)
-                   :text (if deep (copy-seq (text node)) (text node))))
-  (:method ((node comment) &optional (deep T))
+  (:method ((node text-node) &optional (deep t))
     (make-instance (class-of node)
                    :parent (parent node)
                    :text (if deep (copy-seq (text node)) (text node))))
-  (:method ((node element) &optional (deep T))
+  (:method ((node comment) &optional (deep t))
+    (make-instance (class-of node)
+                   :parent (parent node)
+                   :text (if deep (copy-seq (text node)) (text node))))
+  (:method ((node element) &optional (deep t))
     (let ((clone (make-instance (class-of node)
                                 :parent (parent node)
                                 :tag-name (tag-name node)
@@ -395,20 +395,20 @@ The children of NESTING-NODEs are copied as per (CLONE-CHILDREN CHILD T)")
                                 :attributes (clone-attributes node))))
       (setf (children clone) (clone-children node deep clone))
       clone))
-  (:method ((node doctype) &optional (deep T))
+  (:method ((node doctype) &optional (deep t))
     (make-instance (class-of node)
                    :parent (parent node)
                    :doctype (if deep (copy-seq (doctype node)) (doctype node))))
-  (:method ((node xml-header) &optional (deep T))
+  (:method ((node xml-header) &optional (deep t))
     (declare (ignore deep))
     (make-instance (class-of node)
                    :parent (parent node)
                    :attributes (clone-attributes node)))
-  (:method ((node cdata) &optional (deep T))
+  (:method ((node cdata) &optional (deep t))
     (make-instance (class-of node)
                    :parent (parent node)
                    :text (if deep (copy-seq (text node)) (text node))))
-  (:method ((node processing-instruction) &optional (deep T))
+  (:method ((node processing-instruction) &optional (deep t))
     (make-instance (class-of node)
                    :parent (parent node)
                    :tag-name (tag-name node)
@@ -543,7 +543,7 @@ second return value is set to NIL."
   "Remove the specified attribute if it exists.
 Returns NIL."
   (remhash attribute (attributes element))
-  NIL)
+  nil)
 
 (defun has-attribute (element attribute)
   "Returns T if the provided attribute exists."
@@ -585,22 +585,22 @@ attribute."
                             (return-from get-element-by-id child)))
                         (scanren child)))))
     (scanren node))
-  NIL)
+  nil)
 
 (defvar *stream*)
 (setf (documentation '*stream* 'variable)
       "The stream to serialize to during SERIALIZE-OBJECT.")
 
-(defun serialize (node &optional (stream T))
+(defun serialize (node &optional (stream t))
   "Serializes NODE to STREAM.
 STREAM can be a stream, T for *standard-output* or NIL to serialize to string."
-  (cond ((eql stream T)
+  (cond ((eql stream t)
          (let ((*stream* *standard-output*))
            (serialize-object node)))
-        ((eql stream NIL)
+        ((eql stream nil)
          (with-output-to-string (*stream*)
            (serialize-object node)))
-        (T
+        (t
          (let ((*stream* stream))
            (serialize-object node)))))
 
@@ -670,11 +670,11 @@ returns a non-NIL value. It is safe to modify the child array of the
 parent of each node passed to FUNCTION.
 
 NODE is returned." )
-  (:method ((node node) function &key (test (constantly T)))
+  (:method ((node node) function &key (test (constantly t)))
     (when (funcall test node)
       (funcall function node))
     node)
-  (:method ((node nesting-node) function &key (test (constantly T)))
+  (:method ((node nesting-node) function &key (test (constantly t)))
     (call-next-method)
     (loop for child across (copy-seq (children node))
           do (traverse child function :test test))

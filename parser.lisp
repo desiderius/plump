@@ -59,7 +59,7 @@ E.g. <foo bar baz> => bar baz"
        (#\' (prog2 (advance)
                 (consume-until (make-matcher (is #\')))
               (advance)))
-       (T (consume-until (make-matcher (or :whitespace :tag-end))))))))
+       (t (consume-until (make-matcher (or :whitespace :tag-end))))))))
 
 (defun read-attribute-name ()
   "Reads an attribute name."
@@ -76,8 +76,8 @@ E.g. <foo bar baz> => bar baz"
          (skip-whitespace)
          (setf value (read-attribute-value)))
         ((not next)
-         (cons name NIL))
-        (T
+         (cons name nil))
+        (t
          (unread))))
     (cons name value)))
 
@@ -86,11 +86,11 @@ E.g. <foo bar baz> => bar baz"
   (loop with table = (make-attribute-map)
         for char = (peek)
         do (case char
-             ((#\/ #\> NIL)
+             ((#\/ #\> nil)
               (return table))
              (#.*whitespace*
               (advance))
-             (T
+             (t
               (let ((entry (read-attribute)))
                 (setf (gethash (car entry) table) (cdr entry)))))))
 
@@ -129,7 +129,7 @@ Returns the completed node if one can be read."
               (let ((text (read-text)))
                 (setf (text text) (concatenate 'string "<" (text text)))
                 text))))
-      (progn (unread) NIL)))
+      (progn (unread) nil)))
 
 (defun read-root (&optional (root (make-root)))
   "Creates a root element and reads nodes into it.

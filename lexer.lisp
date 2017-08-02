@@ -27,7 +27,7 @@
           (*index* 0))
      (handler-bind ((error #'(lambda (err)
                                (declare (ignore err))
-                               (format T "Error during lexing at index ~a~%" *index*))))
+                               (format t "Error during lexing at index ~a~%" *index*))))
        ,@body)))
 
 (declaim (ftype (function () (or character null)) consume)
@@ -38,7 +38,7 @@ Otherwise returns NIL."
   (declare (optimize (speed 3) (safety 0)))
   (when (< *index* *length*)
     (prog1 (aref *string* *index*)
-      #+plump-debug-lexer (format T "~a +~%" *index*)
+      #+plump-debug-lexer (format t "~a +~%" *index*)
       (incf *index*))))
 
 (declaim (ftype (function () (or fixnum null)) advance)
@@ -48,7 +48,7 @@ Otherwise returns NIL."
 Returns the new index or NIL."
   (declare (optimize (speed 3) (safety 0)))
   (when (< *index* *length*)
-    #+plump-debug-lexer (format T "~a +~%" *index*)
+    #+plump-debug-lexer (format t "~a +~%" *index*)
     (incf *index*)))
 
 (declaim (ftype (function () fixnum) unread)
@@ -58,7 +58,7 @@ Returns the new index or NIL."
 Returns the new *INDEX*."
   (declare (optimize (speed 3) (safety 0)))
   (when (< 0 *index*)
-    #+plump-debug-lexer (format T "~a -~%" *index*)
+    #+plump-debug-lexer (format t "~a -~%" *index*)
     (decf *index*))
   *index*)
 
@@ -68,7 +68,7 @@ Returns the new *INDEX*."
   "Returns the next character, if any."
   (declare (optimize (speed 3) (safety 0)))
   (when (< *index* *length*)
-    #+plump-debug-lexer (format T "~a ?~%" *index*)
+    #+plump-debug-lexer (format t "~a ?~%" *index*)
     (aref *string* *index*)))
 
 (declaim (ftype (function (fixnum) fixnum) advance-n)
@@ -78,7 +78,7 @@ Returns the new *INDEX*."
 Returns the new *INDEX*."
   (declare (optimize (speed 3) (safety 0)))
   (declare (fixnum n))
-  #+plump-debug-lexer (format T "~a +~d~%" *index* n)
+  #+plump-debug-lexer (format t "~a +~d~%" *index* n)
   (incf *index* n)
   (when (<= *length* *index*)
     (setf *index* *length*))
@@ -91,7 +91,7 @@ Returns the new *INDEX*."
 Returns the new *INDEX*."
   (declare (optimize (speed 3) (safety 0)))
   (declare (fixnum n))
-  #+plump-debug-lexer (format T "~a -~d~%" *index* n)
+  #+plump-debug-lexer (format t "~a -~d~%" *index* n)
   (decf *index* n)
   (when (< *index* 0)
     (setf *index* 0))
@@ -191,7 +191,7 @@ return successfully. The last match is returned, if all."
                        collect `(,(typecase i
                                     (string 'matcher-string)
                                     (character 'matcher-character)
-                                    (T 'matcher-string)) ,i))))
+                                    (t 'matcher-string)) ,i))))
 
 (defmacro make-matcher (form)
   "Macro to create a matcher chain."
@@ -200,25 +200,25 @@ return successfully. The last match is returned, if all."
                (keyword
                 `(gethash ',form *matchers*))
                (atom form)
-               (T
+               (t
                 (cons
-                 (case (find-symbol (string (car form)) "PLUMP-LEXER")
+                 (case (find-symbol (string (car form)) 'plump-lexer)
                    (not 'matcher-not)
                    (and 'matcher-and)
                    (or 'matcher-or)
                    (is (typecase (second form)
                          (string 'matcher-string)
                          (character 'matcher-character)
-                         (T 'matcher-string)))
+                         (t 'matcher-string)))
                    (in 'matcher-range)
                    (next 'matcher-next)
                    (prev 'matcher-prev)
                    (any 'matcher-any)
                    (find 'matcher-find)
-                   (T (car form)))
+                   (t (car form)))
                  (mapcar #'transform (cdr form)))))))
     (transform form)))
 
 (defmacro define-matcher (name form)
   "Associates NAME as a keyword to the matcher form. You can then use the keyword in further matcher rules."
-  `(setf (gethash ,(intern (string name) "KEYWORD") *matchers*) (make-matcher ,form)))
+  `(setf (gethash ,(intern (string name) (find-package 'keyword)) *matchers*) (make-matcher ,form)))

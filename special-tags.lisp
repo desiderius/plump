@@ -20,8 +20,8 @@
   (advance)
   (dolist (tag *tagstack*)
     (when (string-equal name tag :start2 1)
-      (throw tag NIL)))
-  NIL)
+      (throw tag nil)))
+  nil)
 
 (defun starts-with (find string &key (start 0))
   (string= find string :start2 start :end2 (length find)))
@@ -103,16 +103,16 @@
   (with-output-to-string (out)
     (tagbody
      start (case (peek)
-             ((NIL) (go end))
+             ((nil) (go end))
              (#\< (advance) (go tag))
-             (T (write-char (consume) out) (go start)))
+             (t (write-char (consume) out) (go start)))
      tag (case (peek)
            (#\/ (advance) (go name))
-           (T (write-char #\< out) (go start)))
+           (t (write-char #\< out) (go start)))
      name (let ((tag (consume-until (make-matcher (not :name)))))
             (cond ((and (string-equal tag name) (eql #\> (peek)))
                    (advance) (go end))
-                  (T
+                  (t
                    (write-string "</" out)
                    (write-string tag out) (go start))))
      end)))

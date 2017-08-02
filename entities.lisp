@@ -308,16 +308,16 @@ If an entity does not match, it is left in place unless REMOVE-INVALID is non-NI
                (loop for i from (1+ i) below (length text)
                      do (case (aref text i)
                           (#.*alpha-chars*
-                           T)
+                           t)
                           (#\;
                            (let ((entity (translate-entity text :start (+ start 1) :end i)))
                              (cond
                                (entity (write-char entity output))
-                               (remove-invalid NIL)
-                               (T (write-string text output :start start :end (1+ i)))))
+                               (remove-invalid nil)
+                               (t (write-string text output :start start :end (1+ i)))))
                            (setf start (1+ i) i (1+ i))
                            (return))
-                          (T ; Invalid char, not an entity.
+                          (t ; Invalid char, not an entity.
                            (return)))))
           finally (write-string text output :start start))))
 
